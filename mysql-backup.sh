@@ -203,6 +203,10 @@ else
         clean_up
 fi
 
+if [ $ARCHIVE -eq "1" ] ; then
+	archive_policy
+fi
+
 if [ $DB_ALL_BACKUP -eq "1" ] ; then
 	all_backup
 else
