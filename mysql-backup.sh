@@ -135,9 +135,10 @@ func_ftp () {
 		ftp -n $FTP_HOST << EOF
 		quote USER "$FTP_USER"
 		quote PASS "$FTP_PASS"
+		prompt
 		cd $FTP_PATH
 		put $PASSED_FILE
-		del $ARCHIVE_FILE
+		mdel $ARCHIVE_FILE*
 		quit
 EOF
 		if [ $? -eq "1" ] ; then
