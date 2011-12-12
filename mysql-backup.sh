@@ -15,7 +15,7 @@ fi
 # Define our email subject (default is failure)
 EMAIL_SUB="mySQL Backup Error on $(hostname)"
 EMAIL_TEMP_FILE="/tmp/mysqlbackup.txt"
-# Define our output file name 
+# Define our output file name  (changing this will cause issues)
 FILE_OUT="db_$(hostname)_$(date +%m-%d-%Y)"
 # We use this to track the amount of time
 TIME_HOLD="/tmp/timehold.txt"
@@ -107,7 +107,6 @@ all_backup () {
 
  
 }
-# if [ /etc/passwd -nt timestamp ] || [ /etc/shadow -nt timestamp ]; then
 
 archive_policy () {
   if [ $ARCHIVE -eq "1" ] ; then
@@ -129,6 +128,52 @@ archive_policy () {
     rm -f $FILE_OUT.* 
   fi
 }
+
+func_ftp () {
+
+	if [ $REMOTE_ARCHIVE -eq "1" ] ; then
+		ftp -n $FTP_HOST << EOF
+		quote USER "$FTP_USER"
+		quote PASS "$FTP_PASS"
+		cd $FTP_PATH
+		put $PASSED_FILE
+		del $ARCHIVE_FILE
+		quit
+EOF
+		if [ $? -eq "1" ] ; then
+			# Add failure handling
+			log "Error during FTP upload"
+			exit 1
+		fi
+
+	else
+		ftp -n $FTP_HOST << EOF
+		quote USER "$FTP_USER"
+		quote PASS "$FTP_PASS"
+		cd $FTP_PATH
+		put $PASSED_FILE
+		quit
+EOF
+		if [ $? -eq "1" ] ; then
+			log "Error during FTP upload"
+			exit 1
+		fi
+	fi
+
+}
+
+# SSH/SCP Export Function
+
+func_ssh () {
+  echo ssh
+}
+
+# rSync Export Function
+
+func_rsync () {
+	echo rsync
+}
+
 
 # Begin calculation of backup time.
 TIME_NOW="$(date +%s)"
@@ -172,7 +217,14 @@ TIME_AFTER="$(date +%s)"
 TIME_DIFF="$(expr $TIME_AFTER - $TIME_NOW)"
 echo |awk '{print strftime('$TIME_DIFF',1)}' > $TIME_HOLD
 
+if [ $REMOTE_ARCHIVE -eq "1" ] ; then
+	ARCHIVE_FILE="db_$(hostname)_$(date +%m-%d-%Y --date "$transform -$ARCHIVE_DAYS day")"
+fi
 
-# Finish
+if [ $FTP_EXPORT -eq "1" ] ; then
+	PASSED_FILE="$(ls | grep $FILE_OUT)"
+	func_ftp
+fi
+
 clean_up "0"
 
