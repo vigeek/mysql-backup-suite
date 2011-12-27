@@ -14,4 +14,6 @@ A. Current Functionality
 	6.  Configurable process priority, useful for heavily used systems.
 	7.  Logging functions built in.
 	8.  Option of sending e-mail with a report after backup process completed.
+	9.  create-user.sh - creates a backup user for mySQL with limited permissions.
+	10. Option to export backups to remote FTP servers
 
